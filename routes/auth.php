@@ -15,7 +15,7 @@ Route::get('/login/keycloak', 'Pterodactyl\Http\Controllers\Auth\KeycloakControl
 Route::get('/login/keycloak/callback', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@handleKeycloakCallback')->name('auth.keycloak.callback');
 
 // Redirect all login requests to keycloak.
-Route::get('/login', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.login');
+Route::get('/login', 'Pterodactyl\Http\Controllers\Auth\LoginController@index')->name('auth.login');
 
 Route::get('/password', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.forgot-password');
 Route::get('/password/reset/{token}', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.reset');
