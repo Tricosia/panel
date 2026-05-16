@@ -7,7 +7,7 @@ interface Values {
 }
 
 const urlParams = new URLSearchParams(window.location.search);
-const keycloakError = urlParams.get('error');
+const keycloakError = urlParams.get('keycloak_error');
 
 const LoginContainer = () => {
     return (
@@ -29,11 +29,7 @@ const LoginContainer = () => {
                 </a>
             </div>
 
-            {keycloakError && (
-                <div className='bg-red-700 text-white p-3 rounded mb-4 text-sm font-medium mt-5'>
-                    Error: {decodeURIComponent(keycloakError)}
-                </div>
-            )}
+            <div className='bg-red-700 text-white p-3 rounded mb-4 text-sm font-medium mt-5'>Error: Lorem ipsum</div>
         </div>
     );
 };
