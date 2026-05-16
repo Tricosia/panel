@@ -29,5 +29,4 @@ Route::post('/logout', [Auth\LoginController::class, 'logout'])
     ->middleware('auth')
     ->name('auth.logout');
 
-// Catch any other combinations of routes and pass them off to keycloak.
-Route::fallback([Auth\KeycloakController::class, 'redirectToKeycloak']);
+Route::fallback([Auth\LoginController::class, 'index']);

@@ -49,6 +49,15 @@ class AppServiceProvider extends ServiceProvider
             'task' => Models\Task::class,
             'user' => Models\User::class,
         ]);
+
+        if (class_exists(\Laravel\Socialite\Facades\Socialite::class)) {
+            \Laravel\Socialite\Facades\Socialite::extend('keycloak', function ($app) {
+                $config = $app['config']['services.keycloak'];
+                return \Laravel\Socialite\Facades\Socialite::buildProvider(
+                    \SocialiteProviders\Keycloak\Provider::class, $config
+                );
+            });
+        }
     }
 
     /**

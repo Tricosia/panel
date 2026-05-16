@@ -39,6 +39,6 @@ return [
         'realm' => env('KEYCLOAK_REALM'),
         'client_id' => env('KEYCLOAK_CLIENT_ID'),
         'client_secret' => env('KEYCLOAK_CLIENT_SECRET'),
-        'redirect_uri' => env('KEYCLOAK_REDIRECT_URI'),
+        'redirect' => env('KEYCLOAK_REDIRECT_URI'),
     ],
 ];
