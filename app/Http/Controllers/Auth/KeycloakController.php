@@ -55,8 +55,8 @@ class KeycloakController extends Controller
         }
 
         if (!$keycloakUser instanceof \Laravel\Socialite\Two\User) {
-            return redirect()->route('auth.login')->withErrors([
-                'error' => 'Got invalid user object. Please contact an administrator.'
+            return redirect()->route('auth.login', [
+                'error' => 'Invalid user object received. Please contact an administrator.'
             ]);
         }
 
@@ -67,7 +67,7 @@ class KeycloakController extends Controller
         $adminRole = 'panel-admin';
 
         if (!in_array($requiredRole, $userRoles) && !in_array($adminRole, $userRoles)) {
-            return redirect()->route('auth.login')->withErrors([
+            return redirect()->route('auth.login', [
                 'error' => 'Access denied. You do not have the required permissions for this panel.'
             ]);
         }

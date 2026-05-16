@@ -6,6 +6,9 @@ interface Values {
     password: string;
 }
 
+const urlParams = new URLSearchParams(window.location.search);
+const keycloakError = urlParams.get('error');
+
 const LoginContainer = () => {
     return (
         <div className='w-full max-w-md mx-auto'>
@@ -25,6 +28,12 @@ const LoginContainer = () => {
                     Login with Keycloak
                 </a>
             </div>
+
+            {keycloakError && (
+                <div className='bg-red-700 text-white p-3 rounded mb-4 text-sm font-medium mt-5'>
+                    Error: {decodeURIComponent(keycloakError)}
+                </div>
+            )}
         </div>
     );
 };
