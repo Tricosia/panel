@@ -16,6 +16,25 @@ class KeycloakController extends Controller
      */
     public function redirectToKeycloak(): SymfonyRedirectResponse
     {
+        $baseUrl = config('services.keycloak.base_url', 'https://auth.tricosia.de');
+        $realm = config('services.keycloak.realms', 'tricosia');
+        $clientId = config('services.keycloak.client_id', 'pterodactyl-panel');
+        $redirectUri = config('services.keycloak.redirect', 'https://panel.tricosia.de/auth/login/keycloak/callback');
+
+        $state = \Illuminate\Support\Str::random(40);
+
+        session(['state' => $state]);
+
+        $queryParams = http_build_query([
+            'client_id'     => $clientId,
+            'redirect_uri'  => $redirectUri,
+            'scope'         => 'openid profile email',
+            'response_type' => 'code',
+            'state'         => $state,
+        ]);
+
+        $targetUrl = rtrim($baseUrl, '/') . '/realms/' . $realm . '/protocol/openid-connect/auth?' . $queryParams;
+
         return Socialite::driver('keycloak')->redirect();
     }
 
