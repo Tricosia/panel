@@ -43,9 +43,79 @@ class KeycloakController extends Controller
      */
     public function handleKeycloakCallback(): LaravelRedirectResponse
     {
+        $code = request()->get('code');
+
+        if (!$code) {
+            abort(400, 'No code parameter provided.');
+        }
+
+        $baseUrl = config('services.keycloak.base_url', 'https://auth.tricosia.de');
+        $realm = config('services.keycloak.realms', 'tricosia');
+        $clientId = config('services.keycloak.client_id', 'pterodactyl-panel');
+        $clientSecret = config('services.keycloak.client_secret');
+        $redirectUri = config('services.keycloak.redirect', 'https://panel.tricosia.de/auth/login/keycloak/callback');
+
+        $tokenUrl = rtrim($baseUrl, '/') . '/realms/' . $realm . '/protocol/openid-connect/token';
+
         try
         {
-            $keycloakUser = Socialite::driver('keycloak')->user();
+            $response = \Illuminate\Support\Facades\Http::withOptions([
+                        'verify' => false
+                    ])->asForm()->post($tokenUrl, [
+                        'grant_type'   => 'authorization_code',
+                        'client_id'    => $clientId,
+                        'client_secret'=> $clientSecret,
+                        'code'         => $code,
+                        'redirect_uri' => $redirectUri,
+                    ]);
+
+            if ($response->failed()) {
+                abort(500, 'Keycloak authentication failed.');
+            }
+
+            $tokenData = $response->json();
+            $accessToken = $tokenData['access_token'] ?? null;
+
+            if (!$accessToken) {
+                abort(500, 'Access token not found.');
+            }
+
+            $userInfoUrl = rtrim($baseUrl, '/') . '/realms/' . $realm . '/protocol/openid-connect/userinfo';
+
+            $userResponse = \Illuminate\Support\Facades\Http::withOptions([
+                'verify' => false
+            ])->withToken($accessToken)->get($userInfoUrl);
+
+            if ($userResponse->failed()) {
+                dd('Keycloak UserInfo-Abruf fehlgeschlagen:', $userResponse->body());
+            }
+
+            $userData = $userResponse->json();
+
+            $email = $userData['email'] ?? null;
+            if (!$email) {
+                abort(400, 'No email address provided by Keycloak.');
+            }
+
+            $user = \Pterodactyl\Models\User::where('email', $email)->first();
+
+            if (!$user) {
+                $user = \Pterodactyl\Models\User::create([
+                    'external_id' => $userData['sub'] ?? \Illuminate\Support\Str::random(10),
+                    'uuid'        => \Webpatser\Uuid::generate(4)->string,
+                    'username'    => $userData['preferred_username'] ?? head(explode('@', $email)),
+                    'email'       => $email,
+                    'name_first'  => $userData['given_name'] ?? 'Keycloak',
+                    'name_last'   => $userData['family_name'] ?? 'User',
+                    'password'    => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+                    'root_admin'  => false,
+                ]);
+            }
+
+            \Illuminate\Support\Facades\Auth::login($user, true);
+            request()->session()->regenerate();
+
+            return redirect()->to('/');
         }
         catch (\Exception $e)
         {
@@ -53,59 +123,5 @@ class KeycloakController extends Controller
                 'error' => 'Keycloak authentication failed.'
             ]);
         }
-
-        if (!$keycloakUser instanceof \Laravel\Socialite\Two\User) {
-            abort(500, 'Invalid user object received. Please contact an administrator.');
-        }
-
-        $userAttributes = $keycloakUser->getRaw();
-        $userRoles = $userAttributes['realm_access']['roles'] ?? [];
-
-        $requiredRole = 'panel-user';
-        $adminRole = 'panel-admin';
-
-        if (!in_array($requiredRole, $userRoles) && !in_array($adminRole, $userRoles)) {
-            abort(403, 'Access denied. You do not have the required permissions for this panel.');
-        }
-
-        $user = User::whereEmail($keycloakUser->getEmail())->first();
-
-        $username = $keycloakUser->getName() ?? explode('@', $keycloakUser->getEmail())[0];
-
-        $fullName = $keycloakUser->getName() ?? 'Keycloak User';
-        $nameParts = explode(' ', $fullName, 2);
-        $firstName = $nameParts[0] ?? 'Keycloak';
-        $lastName = $nameParts[1] ?? 'User';
-
-        // create a new pterodactyl user if none exists
-        if (!$user)
-        {
-            // if a user with this username already exists, append a random number to the username
-            if (User::whereUsername($username)->exists())
-            {
-                $username = $username . '_' . rand(10, 99);
-            }
-
-            $user = User::query()->create([
-                'email' => $keycloakUser->getEmail(),
-                'name' => $username,
-                'name_first' => $firstName,
-                'name_last' => $lastName,
-                'password' => bcrypt(str_random(32)),
-                'root_admin' => in_array($adminRole, $userRoles)
-            ]);
-        }
-        else
-        {
-            $user->update([
-                'name' => $username,
-                'name_first' => $firstName,
-                'name_last' => $lastName,
-            ]);
-        }
-
-        Auth::login($user, true);
-
-        return redirect()->intended('/');
     }
 }
