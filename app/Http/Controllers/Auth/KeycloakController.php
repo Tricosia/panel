@@ -92,12 +92,23 @@ class KeycloakController extends Controller
 
             $userData = $userResponse->json();
 
+            $userRoles = $userData['realm_access']['roles'] ?? [];
+
+            $allowedUserRole = 'panel-user';
+            $allowedAdminRole = 'panel-admin';
+
+            if (!in_array($allowedUserRole, $userRoles) && !in_array($allowedAdminRole, $userRoles)) {
+                abort(403, 'Access denied. You do not have the required permissions for this panel.');
+            }
+
             $email = $userData['email'] ?? null;
             if (!$email) {
                 abort(400, 'No email address provided by Keycloak.');
             }
 
             $user = \Pterodactyl\Models\User::where('email', $email)->first();
+
+            $isAdmin = in_array($allowedAdminRole, $userRoles);
 
             if (!$user) {
                 $user = \Pterodactyl\Models\User::create([
@@ -108,7 +119,11 @@ class KeycloakController extends Controller
                     'name_first'  => $userData['given_name'] ?? 'Keycloak',
                     'name_last'   => $userData['family_name'] ?? 'User',
                     'password'    => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
-                    'root_admin'  => false,
+                    'root_admin'  => $isAdmin,
+                ]);
+            } else {
+                $user->update([
+                    'root_admin' => $isAdmin,
                 ]);
             }
 
