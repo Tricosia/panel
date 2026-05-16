@@ -86,7 +86,7 @@ class KeycloakController extends Controller
             }
 
             $userData = json_decode(base64_decode($tokenParts[1]), true) ?? [];
-            $userRoles = $userData['realm_access'][$clientId]['roles'] ?? [];
+            $userRoles = $userData['resource_access'][$clientId]['roles'] ?? [];
 
             $allowedUserRole = 'panel-user';
             $allowedAdminRole = 'panel-admin';
