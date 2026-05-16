@@ -49,7 +49,7 @@ class KeycloakController extends Controller
         }
         catch (\Exception $e)
         {
-            return redirect()->route('login')->withErrors([
+            return redirect()->route('auth.login')->withErrors([
                 'error' => 'Keycloak authentication failed.'
             ]);
         }
