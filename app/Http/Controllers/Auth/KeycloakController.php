@@ -80,19 +80,13 @@ class KeycloakController extends Controller
                 abort(500, 'Access token not found.');
             }
 
-            $userInfoUrl = rtrim($baseUrl, '/') . '/realms/' . $realm . '/protocol/openid-connect/userinfo';
-
-            $userResponse = \Illuminate\Support\Facades\Http::withOptions([
-                'verify' => false
-            ])->withToken($accessToken)->get($userInfoUrl);
-
-            if ($userResponse->failed()) {
-                dd('Keycloak UserInfo-Abruf fehlgeschlagen:', $userResponse->body());
+            $tokenParts = explode('.', $accessToken);
+            if (!isset($tokenParts[1])) {
+                abort(500, 'Invalid access token.');
             }
 
-            $userData = $userResponse->json();
-
-            $userRoles = $userData['realm_access']['roles'] ?? [];
+            $userData = json_decode(base64_decode($tokenParts[1]), true) ?? [];
+            $userRoles = $userData['realm_access'][$clientId]['roles'] ?? [];
 
             $allowedUserRole = 'panel-user';
             $allowedAdminRole = 'panel-admin';
