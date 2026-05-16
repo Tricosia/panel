@@ -11,21 +11,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/auth/login/keycloak', 'KeycloakController@redirectToKeycloak')->name('auth.keycloak.redirect');
-Route::get('/auth/login/keycloak/callback', 'KeycloakController@handleKeycloakCallback')->name('auth.keycloak.callback');
+Route::get('/login/keycloak', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.keycloak.redirect');
+Route::get('/login/keycloak/callback', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@handleKeycloakCallback')->name('auth.keycloak.callback');
 
 // Redirect all login requests to keycloak.
-Route::get('/login', 'KeycloakController@redirectToKeycloak')->name('auth.login');
+Route::get('/login', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.login');
 
-// Deactivate password reset routes by redirecting to keycloak.
-Route::get('/password', 'KeycloakController@redirectToKeycloak')->name('auth.forgot-password');
-Route::get('/password/reset/{token}', 'KeycloakController@redirectToKeycloak')->name('auth.reset');
+Route::get('/password', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.forgot-password');
+Route::get('/password/reset/{token}', 'Pterodactyl\Http\Controllers\Auth\KeycloakController@redirectToKeycloak')->name('auth.reset');
 
-// Remove the guest middleware and apply the authenticated middleware to this endpoint,
-// so it cannot be used unless you're already logged in.
-Route::post('/logout', 'LoginController@logout')
+Route::post('/logout', 'Pterodactyl\Http\Controllers\Auth\LoginController@logout')
     ->withoutMiddleware('guest')
     ->middleware('auth')
     ->name('auth.logout');
 
-Route::fallback('LoginController@index');
+Route::fallback('Pterodactyl\Http\Controllers\Auth\LoginController@index');
