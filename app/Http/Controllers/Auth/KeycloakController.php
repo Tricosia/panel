@@ -35,7 +35,7 @@ class KeycloakController extends Controller
 
         $targetUrl = rtrim($baseUrl, '/') . '/realms/' . $realm . '/protocol/openid-connect/auth?' . $queryParams;
 
-        return Socialite::driver('keycloak')->redirect();
+        return redirect()->away($targetUrl);
     }
 
     /**
