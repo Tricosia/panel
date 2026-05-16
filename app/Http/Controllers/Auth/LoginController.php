@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Pterodactyl\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Pterodactyl\Facades\Activity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -71,5 +72,21 @@ class LoginController extends AbstractLoginController
                 'confirmation_token' => $token,
             ],
         ]);
+    }
+
+    /**
+     * Handles a user logout request.
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        $this->auth->guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $baseUrl = rtrim(config('services.keycloak.base_url'), '/');
+        $realm = config('services.keycloak.realm');
+        $redirectUri = urlencode(config('app.url'));
+
+        return redirect("$baseUrl/realms/$realm/protocol/openid-connect/logout?post_logout_redirect_uri=$redirectUri");
     }
 }

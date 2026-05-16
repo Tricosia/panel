@@ -20,7 +20,6 @@ $finder = (new Finder())
 return (new Config())
     ->setFinder($finder)
     ->setUsingCache(true)
-    ->setParallelConfig(ParallelConfigFactory::detect())
     ->setRules([
         '@Symfony' => true,
         '@PSR1' => true,
