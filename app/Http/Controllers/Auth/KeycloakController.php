@@ -102,7 +102,7 @@ class KeycloakController extends Controller
             if (!$user) {
                 $user = \Pterodactyl\Models\User::create([
                     'external_id' => $userData['sub'] ?? \Illuminate\Support\Str::random(10),
-                    'uuid'        => \Webpatser\Uuid::generate(4)->string,
+                    'uuid'        => \Webpatser\Uuid\Uuid::generate(4)->string,
                     'username'    => $userData['preferred_username'] ?? head(explode('@', $email)),
                     'email'       => $email,
                     'name_first'  => $userData['given_name'] ?? 'Keycloak',
