@@ -51,8 +51,11 @@ class KeycloakController extends Controller
         }
 
         if (!$state || $state !== session('state')) {
+            session()->forget('state');
             abort(400, 'Invalid state parameter.');
         }
+
+        session()->forget('state');
 
         $baseUrl = config('services.keycloak.base_url', 'https://auth.tricosia.de');
         $realm = config('services.keycloak.realms', 'tricosia');
