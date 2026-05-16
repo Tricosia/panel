@@ -35,12 +35,57 @@ class KeycloakController extends Controller
             ]);
         }
 
+        if (!$keycloakUser instanceof \Laravel\Socialite\Two\User) {
+            return redirect()->route('auth.login')->withErrors([
+                'error' => 'Got invalid user object. Please contact an administrator.'
+            ]);
+        }
+
+        $userAttributes = $keycloakUser->getRaw();
+        $userRoles = $userAttributes['realm_access']['roles'] ?? [];
+
+        $requiredRole = 'panel-user';
+        $adminRole = 'panel-admin';
+
+        if (!in_array($requiredRole, $userRoles) && !in_array($adminRole, $userRoles)) {
+            return redirect()->route('auth.login')->withErrors([
+                'error' => 'Access denied. You do not have the required permissions for this panel.'
+            ]);
+        }
+
         $user = User::whereEmail($keycloakUser->getEmail())->first();
 
-        if ($user == null)
+        $fullName = $keycloakUser->getName() ?? 'Keycloak User';
+        $nameParts = explode(' ', $fullName, 2);
+        $firstName = $nameParts[0] ?? 'Keycloak';
+        $lastName = $nameParts[1] ?? 'User';
+
+        // create a new pterodactyl user if none exists
+        if (!$user)
         {
-            return redirect()->route('login')->withErrors([
-                'error' => 'Panel access not permitted.'
+            $username = $keycloakUser->getName() ?? explode('@', $keycloakUser->getEmail())[0];
+
+            // if a user with this username already exists, append a random number to the username
+            if (User::whereUsername($username)->exists())
+            {
+                $username = $username . '_' . rand(10, 99);
+            }
+
+            $user = User::query()->create([
+                'email' => $keycloakUser->getEmail(),
+                'name' => $username,
+                'name_first' => $firstName,
+                'name_last' => $lastName,
+                'password' => bcrypt(str_random(32)),
+                'root_admin' => in_array($adminRole, $userRoles)
+            ]);
+        }
+        else
+        {
+            $user->update([
+                'name' => $username,
+                'name_first' => $firstName,
+                'name_last' => $lastName,
             ]);
         }
 
