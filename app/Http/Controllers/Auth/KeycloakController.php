@@ -44,9 +44,14 @@ class KeycloakController extends Controller
     public function handleKeycloakCallback(): LaravelRedirectResponse
     {
         $code = request()->get('code');
+        $state = request()->get('state');
 
         if (!$code) {
             abort(400, 'No code parameter provided.');
+        }
+
+        if (!$state || $state !== session('state')) {
+            abort(400, 'Invalid state parameter.');
         }
 
         $baseUrl = config('services.keycloak.base_url', 'https://auth.tricosia.de');
