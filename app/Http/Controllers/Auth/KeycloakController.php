@@ -55,6 +55,8 @@ class KeycloakController extends Controller
 
         $user = User::whereEmail($keycloakUser->getEmail())->first();
 
+        $username = $keycloakUser->getName() ?? explode('@', $keycloakUser->getEmail())[0];
+
         $fullName = $keycloakUser->getName() ?? 'Keycloak User';
         $nameParts = explode(' ', $fullName, 2);
         $firstName = $nameParts[0] ?? 'Keycloak';
@@ -63,8 +65,6 @@ class KeycloakController extends Controller
         // create a new pterodactyl user if none exists
         if (!$user)
         {
-            $username = $keycloakUser->getName() ?? explode('@', $keycloakUser->getEmail())[0];
-
             // if a user with this username already exists, append a random number to the username
             if (User::whereUsername($username)->exists())
             {
