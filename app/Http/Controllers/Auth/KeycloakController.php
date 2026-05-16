@@ -60,7 +60,7 @@ class KeycloakController extends Controller
         try
         {
             $response = \Illuminate\Support\Facades\Http::withOptions([
-                        'verify' => false
+                        'verify' => true
                     ])->asForm()->post($tokenUrl, [
                         'grant_type'   => 'authorization_code',
                         'client_id'    => $clientId,
